@@ -201,6 +201,9 @@ describe('accessibility', () => {
       // The ID logic seems to generate IDs like flowchart-A-0
       const nodeWrapper = ensureNodeFromSelector('.node-wrapper', body.node());
 
+      // Check for role="listitem"
+      expect(nodeWrapper.getAttribute('role')).toBe('listitem');
+
       // Check for outbound links
       const links = nodeWrapper.querySelectorAll('a[aria-label^="Link to"]');
       expect(links.length).toBe(2);
@@ -247,6 +250,9 @@ describe('accessibility', () => {
 
     // Find Node A. It should be wrapped in .node-wrapper because it has outbound edges.
     const nodeWrapper = ensureNodeFromSelector('.node-wrapper', body.node());
+
+    // Check for role="listitem"
+    expect(nodeWrapper.getAttribute('role')).toBe('listitem');
 
     // Check for outbound links
     const links = nodeWrapper.querySelectorAll('a[aria-label^="Link to"]');

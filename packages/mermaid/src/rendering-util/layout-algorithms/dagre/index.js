@@ -44,7 +44,7 @@ const recursiveRender = async (_elem, graph, diagramType, id, parentCluster, sit
   const clusters = elem.insert('g').attr('class', 'clusters');
   const edgePaths = elem.insert('g').attr('class', 'edgePaths');
   const edgeLabels = elem.insert('g').attr('class', 'edgeLabels');
-  const nodes = elem.insert('g').attr('class', 'nodes');
+  const nodes = elem.insert('g').attr('class', 'nodes').attr('role', 'list');
 
   // Insert nodes, this will insert them into the dom and each node will get a size. The size is updated
   // to the abstract node and is later used by dagre for the layout

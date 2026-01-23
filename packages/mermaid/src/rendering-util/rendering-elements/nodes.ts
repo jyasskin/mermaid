@@ -24,7 +24,10 @@ export async function insertNode(
   let parent = elem;
 
   if (renderOptions.outboundEdges?.length) {
-    wrapper = elem.insert<SVGGElement>('g').attr('class', 'node-wrapper');
+    wrapper = elem
+      .insert<SVGGElement>('g')
+      .attr('class', 'node-wrapper')
+      .attr('role', 'listitem');
     parent = wrapper;
 
     const { securityLevel } = renderOptions.config;
@@ -80,6 +83,8 @@ export async function insertNode(
 
   if (wrapper) {
     newEl = wrapper;
+  } else {
+    newEl.attr('role', 'listitem');
   }
 
   if (node.tooltip) {

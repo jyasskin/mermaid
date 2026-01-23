@@ -792,7 +792,7 @@ export const render = async (
   // elements and the nodes
   const subGraphsEl = svg.insert('g').attr('class', 'subgraphs');
 
-  const nodeEl = svg.insert('g').attr('class', 'nodes');
+  const nodeEl = svg.insert('g').attr('class', 'nodes').attr('role', 'list');
 
   // Add the nodes to the graph, this will entail creating the actual nodes
   // in order to get the size of the node. You can't get the size of a node
