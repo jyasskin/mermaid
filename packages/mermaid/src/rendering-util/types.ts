@@ -144,6 +144,7 @@ export interface Edge {
   dir?: string;
   source?: string;
   target?: string;
+  targetId?: string;
   depth?: number;
 }
 
@@ -195,6 +196,7 @@ export interface ShapeRenderOptions {
   /** Some shapes render differently if a diagram has a direction `LR` */
   dir?: Node['dir'];
   padding?: number;
+  outboundEdges?: Edge[];
 }
 
 export type KanbanNode = Node & {

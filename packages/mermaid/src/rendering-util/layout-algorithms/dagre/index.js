@@ -125,7 +125,19 @@ const recursiveRender = async (_elem, graph, diagramType, id, parentCluster, sit
           // insertCluster(clusters, graph.node(v));
         } else {
           log.trace('Node - the non recursive path XAX', v, nodes, graph.node(v), dir);
-          await insertNode(nodes, graph.node(v), { config: siteConfig, dir });
+
+          const renderOptions = { config: siteConfig, dir };
+          if (diagramType === 'flowchart-v2') {
+            renderOptions.outboundEdges = graph.outEdges(v).map((e) => {
+              const targetNode = graph.node(e.w);
+              return {
+                ...graph.edge(e.v, e.w, e.name),
+                target: e.w,
+                targetId: targetNode?.domId || targetNode?.id || e.w,
+              };
+            });
+          }
+          await insertNode(nodes, graph.node(v), renderOptions);
         }
       }
     })
