@@ -86,7 +86,20 @@ export const render = async (
       graph.children.push(child);
       nodeDb[node.id] = node;
 
-      const childNodeEl = await insertNode(nodeEl, node, { config, dir: node.dir });
+      // START: Get outbound edges for accessibility
+      const outboundEdges = data4Layout.edges
+        .filter((e) => e.start === node.id)
+        .map((e) => ({
+          ...e,
+          targetId: e.end, // In ELK layout data, 'end' is the ID
+        }));
+      // END: Get outbound edges
+
+      const childNodeEl = await insertNode(nodeEl, node, {
+        config,
+        dir: node.dir,
+        outboundEdges,
+      });
       const boundingBox = childNodeEl.node()!.getBBox();
       // Store the domId separately for rendering, not in the ELK graph
       child.domId = childNodeEl;
