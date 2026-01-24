@@ -283,5 +283,44 @@ describe('accessibility', () => {
       // Check outbound links are NOT nested inside explicit link
       expect(explicitLinkX?.contains(links[0])).toBe(false);
     });
+
+  jsdomIt('should set role="listitem" on subgraphs', async ({ body }) => {
+    const data = `
+    flowchart TD
+      subgraph One
+        A
+      end
+      subgraph Two
+        B
+      end
+      One --> Two
+    `;
+
+    const { svg } = await mermaidAPI.render('test-id-subgraph', data);
+    body.html(svg);
+
+    // With recursive rendering in Dagre, subgraphs are usually rendered as 'g.root' inside the parent's 'g.nodes'
+    // But let's inspect the structure first.
+    // The top level has g.root > g.nodes.
+    // Inside g.nodes, we expect the subgraph roots.
+
+    const topRoot = ensureNodeFromSelector('.root', body.node());
+    const topNodes = ensureNodeFromSelector('.nodes', topRoot);
+    expect(topNodes.getAttribute('role')).toBe('list');
+
+    // Find the subgraph roots inside topNodes
+    // They should have class 'root' and be direct children of topNodes
+    const subgraphRoots = topNodes.querySelectorAll(':scope > .root');
+    expect(subgraphRoots.length).toBe(2);
+
+    // Check role="listitem"
+    expect(subgraphRoots[0].getAttribute('role')).toBe('listitem');
+    expect(subgraphRoots[1].getAttribute('role')).toBe('listitem');
+
+    // Check that subgraph roots contain their own g.nodes with role="list"
+    const subNodes0 = subgraphRoots[0].querySelector('.nodes');
+    expect(subNodes0).not.toBeNull();
+    expect(subNodes0?.getAttribute('role')).toBe('list');
+  });
   });
 });

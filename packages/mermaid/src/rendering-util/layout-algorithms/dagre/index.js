@@ -33,6 +33,9 @@ const recursiveRender = async (_elem, graph, diagramType, id, parentCluster, sit
   log.trace('Dir in recursive render - dir:', dir);
 
   const elem = _elem.insert('g').attr('class', 'root');
+  if (parentCluster) {
+    elem.attr('role', 'listitem');
+  }
   if (!graph.nodes()) {
     log.info('No nodes found for', graph);
   } else {
