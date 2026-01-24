@@ -33,6 +33,11 @@ export async function insertNode(
     throw new Error(`No such shape: ${node.shape}. Please check your syntax.`);
   }
 
+  // Create the list item container
+  const nodeContainer = elem.insert('g').attr('role', 'listitem');
+  const labelId = `${node.domId || node.id}-label`;
+  nodeContainer.attr('aria-labelledby', labelId);
+
   if (node.link) {
     // Add link when appropriate
     let target;
@@ -41,25 +46,28 @@ export async function insertNode(
     } else if (node.linkTarget) {
       target = node.linkTarget || '_blank';
     }
-    newEl = elem
+    // Append the link to the container, not elem
+    newEl = nodeContainer
       .insert<SVGAElement>('svg:a')
       .attr('xlink:href', node.link)
       .attr('target', target ?? null);
     el = await shapeHandler(newEl, node, renderOptions);
   } else {
-    el = await shapeHandler(elem, node, renderOptions);
+    // Pass the container instead of elem
+    el = await shapeHandler(nodeContainer, node, renderOptions);
     newEl = el;
   }
   if (node.tooltip) {
     el.attr('title', node.tooltip);
   }
 
-  nodeElems.set(node.id, newEl);
+  // Map the ID to the container for positioning
+  nodeElems.set(node.id, nodeContainer);
 
   if (node.haveCallback) {
-    newEl.attr('class', newEl.attr('class') + ' clickable');
+    nodeContainer.attr('class', nodeContainer.attr('class') + ' clickable');
   }
-  return newEl;
+  return nodeContainer;
 }
 
 export const setNodeElem = (elem: NodeElement, node: Pick<Node, 'id'>) => {

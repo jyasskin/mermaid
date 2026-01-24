@@ -779,7 +779,7 @@ export const render = async (
   // elements and the nodes
   const subGraphsEl = svg.insert('g').attr('class', 'subgraphs');
 
-  const nodeEl = svg.insert('g').attr('class', 'nodes');
+  const nodeEl = svg.insert('g').attr('class', 'nodes').attr('role', 'list');
 
   // Add the nodes to the graph, this will entail creating the actual nodes
   // in order to get the size of the node. You can't get the size of a node
@@ -787,10 +787,34 @@ export const render = async (
   // we will position the nodes when we get the layout from elkjs
   elkGraph = await addVertices(nodeEl, data4Layout.nodes, elkGraph);
   // Time for the edges, we start with adding an element in the node to hold the edges
-  const edgesEl = svg.insert('g').attr('class', 'edges edgePaths');
+  const edgesEl = svg
+    .insert('g')
+    .attr('class', 'edges edgePaths')
+    .attr('aria-hidden', 'true');
 
   // Add the edges to the elk graph, this will entail creating the actual edges
   elkGraph = await addEdges(data4Layout, elkGraph, svg);
+
+  // Add accessible edges to nodes
+  data4Layout.nodes.forEach((node) => {
+    if (nodeDb[node.id]) {
+      const nodeData = nodeDb[node.id];
+      if (!nodeData.isGroup && nodeData.domId) {
+        // Find outgoing edges
+        const outgoingEdges = data4Layout.edges.filter((e) => e.start === node.id);
+        outgoingEdges.forEach((edge) => {
+          const targetNode = nodeDb[edge.end];
+          if (targetNode && targetNode.label) {
+            nodeData.domId
+              .insert('a')
+              .attr('class', 'visually-hidden')
+              .attr('href', `#${edge.end}`)
+              .text(`Link to ${targetNode.label}`);
+          }
+        });
+      }
+    }
+  });
 
   // Iterate through all nodes and add the top level nodes to the graph
   const nodes = data4Layout.nodes;
