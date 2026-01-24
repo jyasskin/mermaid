@@ -1,6 +1,7 @@
 import { addSVGa11yTitleDescription, setA11yDiagramInfo } from './accessibility.js';
 import { ensureNodeFromSelector, jsdomIt } from './tests/util.js';
 import { expect } from 'vitest';
+import mermaidAPI from './mermaidAPI.js';
 
 describe('accessibility', () => {
   describe('setA11yDiagramInfo', () => {
@@ -182,5 +183,144 @@ describe('accessibility', () => {
         });
       });
     });
+  });
+
+  describe('Accessibility Links', () => {
+    jsdomIt('should add links for outbound edges in flowcharts', async ({ body }) => {
+      const data = `
+      flowchart TD
+        A --> B
+        A --> C
+        click A "http://google.com" "Tooltip"
+      `;
+
+      const { svg } = await mermaidAPI.render('test-id', data);
+      body.html(svg);
+
+      // Find Node A. It should be wrapped in .node-wrapper because it has outbound edges.
+      // The ID logic seems to generate IDs like flowchart-A-0
+      const nodeWrapper = ensureNodeFromSelector('.node-wrapper', body.node());
+
+      // Check for role="listitem"
+      expect(nodeWrapper.getAttribute('role')).toBe('listitem');
+
+      // Check for outbound links
+      const links = nodeWrapper.querySelectorAll('a[aria-label^="Link to"]');
+      expect(links.length).toBe(2);
+
+      // Check one of them points to B or C
+      const hrefs = Array.from(links).map(
+        (l) => l.getAttribute('xlink:href') || l.getAttribute('href')
+      );
+      expect(hrefs.some((h) => h && h.includes('B'))).toBe(true);
+      expect(hrefs.some((h) => h && h.includes('C'))).toBe(true);
+
+      // Check existing explicit link is still there and correct
+      // Use a more robust selector that doesn't rely on exact attribute string matching if possible
+      const explicitLinkX = nodeWrapper.querySelector(
+        'a[href*="google.com"], a[xlink\\:href*="google.com"]'
+      );
+
+      // The explicit link wraps the visual node
+      const nodeVisual = nodeWrapper.querySelector('.node');
+      expect(nodeVisual).not.toBeNull();
+
+      // Check nesting: explicit link should contain nodeVisual
+      expect(explicitLinkX).not.toBeNull();
+      expect(explicitLinkX?.contains(nodeVisual)).toBe(true);
+
+      // Check wrapper contains outbound links
+      expect(nodeWrapper.contains(links[0])).toBe(true);
+
+    // Check outbound links are NOT nested inside explicit link
+    expect(explicitLinkX?.contains(links[0])).toBe(false);
+  });
+
+  jsdomIt('should add links for outbound edges in flowcharts using elk', async ({ body }) => {
+    const data = `
+    %%{init: {"layout": "elk"}}%%
+    flowchart TD
+      A --> B
+      A --> C
+      click A "http://google.com" "Tooltip"
+    `;
+
+    const { svg } = await mermaidAPI.render('test-id-elk', data);
+    body.html(svg);
+
+    // Find Node A. It should be wrapped in .node-wrapper because it has outbound edges.
+    const nodeWrapper = ensureNodeFromSelector('.node-wrapper', body.node());
+
+    // Check for role="listitem"
+    expect(nodeWrapper.getAttribute('role')).toBe('listitem');
+
+    // Check for outbound links
+    const links = nodeWrapper.querySelectorAll('a[aria-label^="Link to"]');
+    expect(links.length).toBe(2);
+
+    // Check one of them points to B or C
+    const hrefs = Array.from(links).map(
+      (l) => l.getAttribute('xlink:href') || l.getAttribute('href')
+    );
+    expect(hrefs.some((h) => h && h.includes('B'))).toBe(true);
+    expect(hrefs.some((h) => h && h.includes('C'))).toBe(true);
+
+    const explicitLinkX = nodeWrapper.querySelector(
+      'a[href*="google.com"], a[xlink\\:href*="google.com"]'
+    );
+
+    // The explicit link wraps the visual node
+    const nodeVisual = nodeWrapper.querySelector('.node');
+    expect(nodeVisual).not.toBeNull();
+
+    // Check nesting: explicit link should contain nodeVisual
+    expect(explicitLinkX).not.toBeNull();
+    expect(explicitLinkX?.contains(nodeVisual)).toBe(true);
+
+    // Check wrapper contains outbound links
+    expect(nodeWrapper.contains(links[0])).toBe(true);
+
+      // Check outbound links are NOT nested inside explicit link
+      expect(explicitLinkX?.contains(links[0])).toBe(false);
+    });
+
+  jsdomIt('should set role="listitem" on subgraphs', async ({ body }) => {
+    const data = `
+    flowchart TD
+      subgraph One
+        A
+      end
+      subgraph Two
+        B
+      end
+      One --> Two
+    `;
+
+    const { svg } = await mermaidAPI.render('test-id-subgraph', data);
+    body.html(svg);
+
+    // With recursive rendering in Dagre, subgraphs are usually rendered as 'g.root' inside the parent's 'g.nodes'
+    // But let's inspect the structure first.
+    // The top level has g.root > g.nodes.
+    // Inside g.nodes, we expect the subgraph roots.
+
+    const topRoot = ensureNodeFromSelector('.root', body.node());
+    const topNodes = ensureNodeFromSelector('.nodes', topRoot);
+    expect(topNodes.getAttribute('role')).toBe('list');
+
+    // Find the subgraph roots inside topNodes
+    // They should have class 'root' and be direct children of topNodes
+    const subgraphRoots = topNodes.querySelectorAll(':scope > .root');
+    expect(subgraphRoots.length).toBe(2);
+
+    // Check role="listitem"
+    expect(subgraphRoots[0].getAttribute('role')).toBe('listitem');
+    expect(subgraphRoots[1].getAttribute('role')).toBe('listitem');
+
+    // Check that subgraph roots contain their own g.nodes with role="list"
+    const subNodes0 = subgraphRoots[0].querySelector('.nodes');
+    expect(subNodes0).not.toBeNull();
+    expect(subNodes0?.getAttribute('role')).toBe('list');
+  });
   });
 });

@@ -33,6 +33,9 @@ const recursiveRender = async (_elem, graph, diagramType, id, parentCluster, sit
   log.trace('Dir in recursive render - dir:', dir);
 
   const elem = _elem.insert('g').attr('class', 'root');
+  if (parentCluster) {
+    elem.attr('role', 'listitem');
+  }
   if (!graph.nodes()) {
     log.info('No nodes found for', graph);
   } else {
@@ -44,7 +47,7 @@ const recursiveRender = async (_elem, graph, diagramType, id, parentCluster, sit
   const clusters = elem.insert('g').attr('class', 'clusters');
   const edgePaths = elem.insert('g').attr('class', 'edgePaths');
   const edgeLabels = elem.insert('g').attr('class', 'edgeLabels');
-  const nodes = elem.insert('g').attr('class', 'nodes');
+  const nodes = elem.insert('g').attr('class', 'nodes').attr('role', 'list');
 
   // Insert nodes, this will insert them into the dom and each node will get a size. The size is updated
   // to the abstract node and is later used by dagre for the layout
@@ -125,7 +128,17 @@ const recursiveRender = async (_elem, graph, diagramType, id, parentCluster, sit
           // insertCluster(clusters, graph.node(v));
         } else {
           log.trace('Node - the non recursive path XAX', v, nodes, graph.node(v), dir);
-          await insertNode(nodes, graph.node(v), { config: siteConfig, dir });
+
+          const renderOptions = { config: siteConfig, dir };
+          renderOptions.outboundEdges = graph.outEdges(v).map((e) => {
+            const targetNode = graph.node(e.w);
+            return {
+              ...graph.edge(e.v, e.w, e.name),
+              target: e.w,
+              targetId: targetNode?.domId || targetNode?.id || e.w,
+            };
+          });
+          await insertNode(nodes, graph.node(v), renderOptions);
         }
       }
     })

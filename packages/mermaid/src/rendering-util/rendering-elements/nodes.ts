@@ -6,7 +6,10 @@ import type { D3Selection } from '../../types.js';
 import type { graphlib } from 'dagre-d3-es';
 
 type ShapeHandler = (typeof shapes)[keyof typeof shapes];
-type NodeElement = D3Selection<SVGAElement> | Awaited<ReturnType<ShapeHandler>>;
+type NodeElement =
+  | D3Selection<SVGAElement>
+  | D3Selection<SVGGElement>
+  | Awaited<ReturnType<ShapeHandler>>;
 
 const nodeElems = new Map<string, NodeElement>();
 
@@ -17,6 +20,33 @@ export async function insertNode(
 ) {
   let newEl: NodeElement | undefined;
   let el;
+  let wrapper: D3Selection<SVGGElement> | undefined;
+  let parent = elem;
+
+  if (renderOptions.outboundEdges?.length) {
+    wrapper = elem
+      .insert<SVGGElement>('g')
+      .attr('class', 'node-wrapper')
+      .attr('role', 'listitem');
+    parent = wrapper;
+
+    const { securityLevel } = renderOptions.config;
+
+    renderOptions.outboundEdges.forEach((edge) => {
+      const targetId = edge.targetId || edge.target;
+      const label = edge.label || `Link to ${edge.target}`;
+      const href = `#${targetId}`;
+      const link = parent.insert<SVGAElement>('svg:a').attr('aria-label', label);
+
+      // We use xlink:href for consistency with other links in mermaid (though href is modern standard)
+      // and we handle security level if needed (though local links are usually safe)
+      if (securityLevel === 'sandbox') {
+        link.attr('target', '_top');
+      }
+
+      link.attr('xlink:href', href);
+    });
+  }
 
   //special check for rect shape (with or without rounded corners)
   if (node.shape === 'rect') {
@@ -41,15 +71,22 @@ export async function insertNode(
     } else if (node.linkTarget) {
       target = node.linkTarget || '_blank';
     }
-    newEl = elem
+    newEl = parent
       .insert<SVGAElement>('svg:a')
       .attr('xlink:href', node.link)
       .attr('target', target ?? null);
     el = await shapeHandler(newEl, node, renderOptions);
   } else {
-    el = await shapeHandler(elem, node, renderOptions);
+    el = await shapeHandler(parent, node, renderOptions);
     newEl = el;
   }
+
+  if (wrapper) {
+    newEl = wrapper;
+  } else {
+    newEl.attr('role', 'listitem');
+  }
+
   if (node.tooltip) {
     el.attr('title', node.tooltip);
   }
