@@ -323,6 +323,26 @@ export interface FlowchartDiagramConfig extends BaseDiagramConfig {
    *
    */
   inheritDir?: boolean;
+  /**
+   * Accessibility options for flowcharts
+   */
+  accessibility?: {
+    /**
+     * Label for the inbound edges list
+     * @default "Inbound edges"
+     */
+    inboundEdgesLabel?: string;
+    /**
+     * Label for the outbound edges list
+     * @default "Outbound edges"
+     */
+    outboundEdgesLabel?: string;
+    /**
+     * If true, add a list of the inbound edges next to the outbound edges list
+     * @default false
+     */
+    listInboundEdges?: boolean;
+  };
 }
 /**
  * This interface was referenced by `MermaidConfig`'s JSON-Schema

@@ -1,4 +1,5 @@
 import type { InternalHelpers, LayoutData, RenderOptions, SVG, SVGGroup } from 'mermaid';
+import { addAccessibleEdgeList } from '../../mermaid/src/rendering-util/rendering-elements/accessibility.js';
 // @ts-ignore TODO: Investigate D3 issue
 import { curveLinear } from 'd3';
 import ELK from 'elkjs/lib/elk.bundled.js';
@@ -796,22 +797,42 @@ export const render = async (
   elkGraph = await addEdges(data4Layout, elkGraph, svg);
 
   // Add accessible edges to nodes
+  const accessibilityConfig = data4Layout.config.flowchart?.accessibility;
   data4Layout.nodes.forEach((node) => {
     if (nodeDb[node.id]) {
       const nodeData = nodeDb[node.id];
       if (!nodeData.isGroup && nodeData.domId) {
         // Find outgoing edges
-        const outgoingEdges = data4Layout.edges.filter((e) => e.start === node.id);
-        outgoingEdges.forEach((edge) => {
-          const targetNode = nodeDb[edge.end];
-          if (targetNode && targetNode.label) {
-            nodeData.domId
-              .insert('a')
-              .attr('class', 'visually-hidden')
-              .attr('href', `#${edge.end}`)
-              .text(`Link to ${targetNode.label}`);
+        const outboundEdges = data4Layout.edges.filter((e) => e.start === node.id);
+        if (outboundEdges.length > 0) {
+          const edges = outboundEdges.map((edge) => ({
+            id: edge.end,
+            label: nodeDb[edge.end]?.label,
+          }));
+          addAccessibleEdgeList(
+            nodeData.domId,
+            edges,
+            'outbound',
+            accessibilityConfig?.outboundEdgesLabel ?? 'Outbound edges'
+          );
+        }
+
+        // Add inbound edges if configured
+        if (accessibilityConfig?.listInboundEdges) {
+          const inboundEdges = data4Layout.edges.filter((e) => e.end === node.id);
+          if (inboundEdges.length > 0) {
+            const edges = inboundEdges.map((edge) => ({
+              id: edge.start,
+              label: nodeDb[edge.start]?.label,
+            }));
+            addAccessibleEdgeList(
+              nodeData.domId,
+              edges,
+              'inbound',
+              accessibilityConfig?.inboundEdgesLabel ?? 'Inbound edges'
+            );
           }
-        });
+        }
       }
     }
   });

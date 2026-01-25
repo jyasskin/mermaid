@@ -23,6 +23,7 @@ import {
   insertEdge,
   clear as clearEdges,
 } from '../../rendering-elements/edges.js';
+import { addAccessibleEdgeList } from '../../rendering-elements/accessibility.js';
 import { log } from '../../../logger.js';
 import { getSubGraphTitleMargins } from '../../../utils/subGraphTitleMargins.js';
 import { getConfig } from '../../../diagram-api/diagramAPI.js';
