@@ -23,7 +23,6 @@ import {
   insertEdge,
   clear as clearEdges,
 } from '../../rendering-elements/edges.js';
-import { addAccessibleEdgeList } from '../../rendering-elements/accessibility.js';
 import { log } from '../../../logger.js';
 import { getSubGraphTitleMargins } from '../../../utils/subGraphTitleMargins.js';
 import { getConfig } from '../../../diagram-api/diagramAPI.js';
@@ -127,19 +126,40 @@ const recursiveRender = async (_elem, graph, diagramType, id, parentCluster, sit
         } else {
           log.trace('Node - the non recursive path XAX', v, nodes, graph.node(v), dir);
           const nodeEl = await insertNode(nodes, graph.node(v), { config: siteConfig, dir });
-          // Add accessible edges
-          const edges = graph.outEdges(v);
-          if (edges && edges.length > 0) {
-            edges.forEach((edge) => {
+          const accessibilityConfig = siteConfig.flowchart?.accessibility;
+
+          // Add outbound edges
+          const outboundEdges = graph.outEdges(v);
+          if (outboundEdges && outboundEdges.length > 0) {
+            const list = nodeEl
+              .insert('g')
+              .attr('class', 'visually-hidden')
+              .attr('role', 'list')
+              .attr('aria-label', accessibilityConfig?.outboundEdgesLabel ?? 'Outbound edges');
+            outboundEdges.forEach((edge) => {
               const targetNode = graph.node(edge.w);
-              if (targetNode && targetNode.label) {
-                nodeEl
-                  .insert('a')
-                  .attr('class', 'visually-hidden')
-                  .attr('href', `#${edge.w}`)
-                  .text(`Link to ${targetNode.label}`);
-              }
+              const label = targetNode?.label || edge.w;
+              const listItem = list.insert('g').attr('role', 'listitem');
+              listItem.insert('a').attr('href', `#${edge.w}`).attr('aria-label', label);
             });
+          }
+
+          // Add inbound edges if configured
+          if (accessibilityConfig?.listInboundEdges) {
+            const inboundEdges = graph.inEdges(v);
+            if (inboundEdges && inboundEdges.length > 0) {
+              const list = nodeEl
+                .insert('g')
+                .attr('class', 'visually-hidden')
+                .attr('role', 'list')
+                .attr('aria-label', accessibilityConfig?.inboundEdgesLabel ?? 'Inbound edges');
+              inboundEdges.forEach((edge) => {
+                const sourceNode = graph.node(edge.v);
+                const label = sourceNode?.label || edge.v;
+                const listItem = list.insert('g').attr('role', 'listitem');
+                listItem.insert('a').attr('href', `#${edge.v}`).attr('aria-label', label);
+              });
+            }
           }
         }
       }

@@ -1,5 +1,4 @@
 import type { InternalHelpers, LayoutData, RenderOptions, SVG, SVGGroup } from 'mermaid';
-import { addAccessibleEdgeList } from '../../mermaid/src/rendering-util/rendering-elements/accessibility.js';
 // @ts-ignore TODO: Investigate D3 issue
 import { curveLinear } from 'd3';
 import ELK from 'elkjs/lib/elk.bundled.js';
@@ -20,6 +19,7 @@ type Node = LayoutData['nodes'][number];
 interface D3Selection<T extends Element> {
   node(): T | null;
   attr(name: string, value: string): D3Selection<T>;
+  insert(name: string): D3Selection<T>;
 }
 
 interface LabelData {
@@ -802,35 +802,51 @@ export const render = async (
     if (nodeDb[node.id]) {
       const nodeData = nodeDb[node.id];
       if (!nodeData.isGroup && nodeData.domId) {
-        // Find outgoing edges
+        // Find outbound edges
         const outboundEdges = data4Layout.edges.filter((e) => e.start === node.id);
         if (outboundEdges.length > 0) {
-          const edges = outboundEdges.map((edge) => ({
-            id: edge.end,
-            label: nodeDb[edge.end]?.label,
-          }));
-          addAccessibleEdgeList(
-            nodeData.domId,
-            edges,
-            'outbound',
-            accessibilityConfig?.outboundEdgesLabel ?? 'Outbound edges'
-          );
+          const list = nodeData.domId
+            .insert('g')
+            .attr('class', 'visually-hidden')
+            .attr('role', 'list')
+            .attr(
+              'aria-label',
+              accessibilityConfig?.outboundEdgesLabel ?? 'Outbound edges'
+            );
+
+          outboundEdges.forEach((edge) => {
+            const targetNode = nodeDb[String(edge.end)];
+            const label = targetNode?.label || edge.end;
+            const listItem = list.insert('g').attr('role', 'listitem');
+            listItem
+              .insert('a')
+              .attr('href', `#${edge.end}`)
+              .attr('aria-label', label);
+          });
         }
 
         // Add inbound edges if configured
         if (accessibilityConfig?.listInboundEdges) {
           const inboundEdges = data4Layout.edges.filter((e) => e.end === node.id);
           if (inboundEdges.length > 0) {
-            const edges = inboundEdges.map((edge) => ({
-              id: edge.start,
-              label: nodeDb[edge.start]?.label,
-            }));
-            addAccessibleEdgeList(
-              nodeData.domId,
-              edges,
-              'inbound',
-              accessibilityConfig?.inboundEdgesLabel ?? 'Inbound edges'
-            );
+            const list = nodeData.domId
+              .insert('g')
+              .attr('class', 'visually-hidden')
+              .attr('role', 'list')
+              .attr(
+                'aria-label',
+                accessibilityConfig?.inboundEdgesLabel ?? 'Inbound edges'
+              );
+
+            inboundEdges.forEach((edge) => {
+              const sourceNode = nodeDb[String(edge.start)];
+              const label = sourceNode?.label || edge.start;
+              const listItem = list.insert('g').attr('role', 'listitem');
+              listItem
+                .insert('a')
+                .attr('href', `#${edge.start}`)
+                .attr('aria-label', label);
+            });
           }
         }
       }

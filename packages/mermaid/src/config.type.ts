@@ -328,20 +328,20 @@ export interface FlowchartDiagramConfig extends BaseDiagramConfig {
    */
   accessibility?: {
     /**
+     * If true, add a list of the inbound edges next to the outbound edges list
+     *
+     */
+    listInboundEdges?: boolean;
+    /**
      * Label for the inbound edges list
-     * @default "Inbound edges"
+     *
      */
     inboundEdgesLabel?: string;
     /**
      * Label for the outbound edges list
-     * @default "Outbound edges"
+     *
      */
     outboundEdgesLabel?: string;
-    /**
-     * If true, add a list of the inbound edges next to the outbound edges list
-     * @default false
-     */
-    listInboundEdges?: boolean;
   };
 }
 /**
