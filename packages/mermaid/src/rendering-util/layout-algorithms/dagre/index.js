@@ -41,10 +41,10 @@ const recursiveRender = async (_elem, graph, diagramType, id, parentCluster, sit
   if (graph.edges().length > 0) {
     log.info('Recursive edges', graph.edge(graph.edges()[0]));
   }
-  const clusters = elem.insert('g').attr('class', 'clusters');
-  const edgePaths = elem.insert('g').attr('class', 'edgePaths');
-  const edgeLabels = elem.insert('g').attr('class', 'edgeLabels');
-  const nodes = elem.insert('g').attr('class', 'nodes');
+  const clusters = elem.insert('g').attr('class', 'clusters').attr('role', 'list');
+  const edgePaths = elem.insert('g').attr('class', 'edgePaths').attr('aria-hidden', 'true');
+  const edgeLabels = elem.insert('g').attr('class', 'edgeLabels').attr('aria-hidden', 'true');
+  const nodes = elem.insert('g').attr('class', 'nodes').attr('role', 'list');
 
   // Insert nodes, this will insert them into the dom and each node will get a size. The size is updated
   // to the abstract node and is later used by dagre for the layout
@@ -125,7 +125,42 @@ const recursiveRender = async (_elem, graph, diagramType, id, parentCluster, sit
           // insertCluster(clusters, graph.node(v));
         } else {
           log.trace('Node - the non recursive path XAX', v, nodes, graph.node(v), dir);
-          await insertNode(nodes, graph.node(v), { config: siteConfig, dir });
+          const nodeEl = await insertNode(nodes, graph.node(v), { config: siteConfig, dir });
+          const accessibilityConfig = siteConfig.flowchart?.accessibility;
+
+          // Add outbound edges
+          const outboundEdges = graph.outEdges(v);
+          if (outboundEdges && outboundEdges.length > 0) {
+            const list = nodeEl
+              .insert('g')
+              .attr('class', 'visually-hidden')
+              .attr('role', 'list')
+              .attr('aria-label', accessibilityConfig?.outboundEdgesLabel ?? 'Outbound edges');
+            outboundEdges.forEach((edge) => {
+              const targetNode = graph.node(edge.w);
+              const label = targetNode?.label || edge.w;
+              const listItem = list.insert('g').attr('role', 'listitem');
+              listItem.insert('a').attr('href', `#${edge.w}`).attr('aria-label', label);
+            });
+          }
+
+          // Add inbound edges if configured
+          if (accessibilityConfig?.listInboundEdges) {
+            const inboundEdges = graph.inEdges(v);
+            if (inboundEdges && inboundEdges.length > 0) {
+              const list = nodeEl
+                .insert('g')
+                .attr('class', 'visually-hidden')
+                .attr('role', 'list')
+                .attr('aria-label', accessibilityConfig?.inboundEdgesLabel ?? 'Inbound edges');
+              inboundEdges.forEach((edge) => {
+                const sourceNode = graph.node(edge.v);
+                const label = sourceNode?.label || edge.v;
+                const listItem = list.insert('g').attr('role', 'listitem');
+                listItem.insert('a').attr('href', `#${edge.v}`).attr('aria-label', label);
+              });
+            }
+          }
         }
       }
     })

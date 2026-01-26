@@ -31,7 +31,9 @@ export const labelHelper = async <T extends SVGGraphicsElement>(
   const labelEl = shapeSvg
     .insert('g')
     .attr('class', 'label')
-    .attr('style', handleUndefinedAttr(node.labelStyle));
+    .attr('style', handleUndefinedAttr(node.labelStyle))
+    .attr('id', `${node.domId || node.id}-label`)
+    .attr('aria-hidden', 'true');
 
   // Replace label with default value if undefined
   let label;

@@ -2161,6 +2161,25 @@ $defs: # JSON Schema definition (maybe we should move these to a separate file)
         description: |
           If true, subgraphs without explicit direction will inherit the global graph direction
           (e.g., LR, TB, RL, BT). Defaults to false to preserve legacy layout behavior.
+      accessibility:
+        type: object
+        description: Accessibility options for flowcharts
+        properties:
+          listInboundEdges:
+            type: boolean
+            default: false
+            description: |
+              If true, add a list of the inbound edges next to the outbound edges list
+          inboundEdgesLabel:
+            type: string
+            default: 'Inbound edges'
+            description: |
+              Label for the inbound edges list
+          outboundEdgesLabel:
+            type: string
+            default: 'Outbound edges'
+            description: |
+              Label for the outbound edges list
 
   SankeyLinkColor:
     description: |

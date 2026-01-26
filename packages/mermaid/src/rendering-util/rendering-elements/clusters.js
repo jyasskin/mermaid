@@ -23,12 +23,18 @@ const rect = async (parent, node) => {
     .insert('g')
     .attr('class', 'cluster ' + node.cssClasses)
     .attr('id', node.id)
-    .attr('data-look', node.look);
+    .attr('data-look', node.look)
+    .attr('role', 'listitem')
+    .attr('aria-labelledby', node.id + '-label');
 
   const useHtmlLabels = getEffectiveHtmlLabels(siteConfig);
 
   // Create the label and insert it after the rect
-  const labelEl = shapeSvg.insert('g').attr('class', 'cluster-label ');
+  const labelEl = shapeSvg
+    .insert('g')
+    .attr('class', 'cluster-label ')
+    .attr('id', node.id + '-label')
+    .attr('aria-hidden', 'true');
 
   const text = await createText(labelEl, node.label, {
     style: node.labelStyle,
@@ -172,13 +178,19 @@ const roundedWithTitle = async (parent, node) => {
     .attr('class', node.cssClasses)
     .attr('id', node.id)
     .attr('data-id', node.id)
-    .attr('data-look', node.look);
+    .attr('data-look', node.look)
+    .attr('role', 'listitem')
+    .attr('aria-labelledby', node.id + '-label');
 
   // add the rect
   const outerRectG = shapeSvg.insert('g', ':first-child');
 
   // Create the label and insert it after the rect
-  const label = shapeSvg.insert('g').attr('class', 'cluster-label');
+  const label = shapeSvg
+    .insert('g')
+    .attr('class', 'cluster-label')
+    .attr('id', node.id + '-label')
+    .attr('aria-hidden', 'true');
   let innerRect = shapeSvg.append('rect');
 
   const text = await createLabel(label, node.label, node.labelStyle, undefined, true);
@@ -291,12 +303,18 @@ const kanbanSection = async (parent, node) => {
     .insert('g')
     .attr('class', 'cluster ' + node.cssClasses)
     .attr('id', node.id)
-    .attr('data-look', node.look);
+    .attr('data-look', node.look)
+    .attr('role', 'listitem')
+    .attr('aria-labelledby', node.id + '-label');
 
   const useHtmlLabels = getEffectiveHtmlLabels(siteConfig);
 
   // Create the label and insert it after the rect
-  const labelEl = shapeSvg.insert('g').attr('class', 'cluster-label ');
+  const labelEl = shapeSvg
+    .insert('g')
+    .attr('class', 'cluster-label ')
+    .attr('id', node.id + '-label')
+    .attr('aria-hidden', 'true');
 
   const text = await createText(labelEl, node.label, {
     style: node.labelStyle,

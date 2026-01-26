@@ -19,6 +19,7 @@ type Node = LayoutData['nodes'][number];
 interface D3Selection<T extends Element> {
   node(): T | null;
   attr(name: string, value: string): D3Selection<T>;
+  insert(name: string): D3Selection<T>;
 }
 
 interface LabelData {
@@ -779,7 +780,7 @@ export const render = async (
   // elements and the nodes
   const subGraphsEl = svg.insert('g').attr('class', 'subgraphs');
 
-  const nodeEl = svg.insert('g').attr('class', 'nodes');
+  const nodeEl = svg.insert('g').attr('class', 'nodes').attr('role', 'list');
 
   // Add the nodes to the graph, this will entail creating the actual nodes
   // in order to get the size of the node. You can't get the size of a node
@@ -787,10 +788,70 @@ export const render = async (
   // we will position the nodes when we get the layout from elkjs
   elkGraph = await addVertices(nodeEl, data4Layout.nodes, elkGraph);
   // Time for the edges, we start with adding an element in the node to hold the edges
-  const edgesEl = svg.insert('g').attr('class', 'edges edgePaths');
+  const edgesEl = svg
+    .insert('g')
+    .attr('class', 'edges edgePaths')
+    .attr('aria-hidden', 'true');
 
   // Add the edges to the elk graph, this will entail creating the actual edges
   elkGraph = await addEdges(data4Layout, elkGraph, svg);
+
+  // Add accessible edges to nodes
+  const accessibilityConfig = data4Layout.config.flowchart?.accessibility;
+  data4Layout.nodes.forEach((node) => {
+    if (nodeDb[node.id]) {
+      const nodeData = nodeDb[node.id];
+      if (!nodeData.isGroup && nodeData.domId) {
+        // Find outbound edges
+        const outboundEdges = data4Layout.edges.filter((e) => e.start === node.id);
+        if (outboundEdges.length > 0) {
+          const list = nodeData.domId
+            .insert('g')
+            .attr('class', 'visually-hidden')
+            .attr('role', 'list')
+            .attr(
+              'aria-label',
+              accessibilityConfig?.outboundEdgesLabel ?? 'Outbound edges'
+            );
+
+          outboundEdges.forEach((edge) => {
+            const targetNode = nodeDb[String(edge.end)];
+            const label = targetNode?.label || edge.end;
+            const listItem = list.insert('g').attr('role', 'listitem');
+            listItem
+              .insert('a')
+              .attr('href', `#${edge.end}`)
+              .attr('aria-label', label);
+          });
+        }
+
+        // Add inbound edges if configured
+        if (accessibilityConfig?.listInboundEdges) {
+          const inboundEdges = data4Layout.edges.filter((e) => e.end === node.id);
+          if (inboundEdges.length > 0) {
+            const list = nodeData.domId
+              .insert('g')
+              .attr('class', 'visually-hidden')
+              .attr('role', 'list')
+              .attr(
+                'aria-label',
+                accessibilityConfig?.inboundEdgesLabel ?? 'Inbound edges'
+              );
+
+            inboundEdges.forEach((edge) => {
+              const sourceNode = nodeDb[String(edge.start)];
+              const label = sourceNode?.label || edge.start;
+              const listItem = list.insert('g').attr('role', 'listitem');
+              listItem
+                .insert('a')
+                .attr('href', `#${edge.start}`)
+                .attr('aria-label', label);
+            });
+          }
+        }
+      }
+    }
+  });
 
   // Iterate through all nodes and add the top level nodes to the graph
   const nodes = data4Layout.nodes;
