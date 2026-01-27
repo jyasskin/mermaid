@@ -15,9 +15,6 @@ export async function insertNode(
   node: NonClusterNode,
   renderOptions: ShapeRenderOptions
 ) {
-  let newEl: NodeElement | undefined;
-  let el;
-
   //special check for rect shape (with or without rounded corners)
   if (node.shape === 'rect') {
     if (node.rx && node.ry) {
@@ -49,7 +46,7 @@ export async function insertNode(
     if (renderOptions.config.securityLevel === 'sandbox') {
       target = '_top';
     } else if (node.linkTarget) {
-      target = node.linkTarget || '_blank';
+      target = node.linkTarget ?? '_blank';
     }
 
     linkEl = outerG
@@ -64,16 +61,16 @@ export async function insertNode(
   }
 
   // Draw the shape into the inner parent
-  el = await shapeHandler(innerParent, node, renderOptions);
+  await shapeHandler(innerParent, node, renderOptions);
 
   // Clickable logic for non-link cases
   if (node.haveCallback && !node.link) {
-     const currentClass = outerG.attr('class');
-     outerG.attr('class', (currentClass ? currentClass + ' ' : '') + 'clickable');
+    const currentClass = outerG.attr('class');
+    outerG.attr('class', (currentClass ? currentClass + ' ' : '') + 'clickable');
   }
 
   // Update nodeElems with the container element
-  newEl = outerG as NodeElement;
+  const newEl = outerG as NodeElement;
   nodeElems.set(node.id, newEl);
 
   return newEl;
