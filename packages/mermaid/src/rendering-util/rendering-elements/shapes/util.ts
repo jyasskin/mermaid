@@ -22,9 +22,8 @@ export const labelHelper = async <T extends SVGGraphicsElement>(
   }
 
   // Identify target for classes/ID.
-  // The logic here handles both the new flow (insertNode creates container) and potentially old flows.
-  // In the new flow, `parent` is either the <a> tag (if link) or the <g> container.
-  // If it's an <a> tag, the container is the parentNode.
+  // If `parent` is an anchor tag (which happens if a link is present),
+  // we want to apply the classes and ID to its parent container (the outer <g>).
   const shapeSvg = parent;
   let classTarget = parent;
 

@@ -56,7 +56,7 @@ export async function insertNode(
 
     innerParent = linkEl;
 
-    // Requirement 5: clickable class on <a>
+    // Add clickable class to link element
     linkEl.attr('class', 'clickable');
   }
 
