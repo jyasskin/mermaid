@@ -40,8 +40,7 @@ export async function insertNode(
     outerG.attr('title', node.tooltip);
   }
 
-  // @ts-expect-error - d3 types issue
-  let innerParent: NodeElement = outerG;
+  let innerParent: D3Selection<SVGGElement> | D3Selection<SVGAElement> = outerG;
   let linkEl;
 
   if (node.link) {

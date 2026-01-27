@@ -28,10 +28,11 @@ export const labelHelper = async <T extends SVGGraphicsElement>(
   let shapeSvg = parent;
   let classTarget = parent;
 
-  // @ts-expect-error - d3 types issue
-  if (parent.node().tagName.toLowerCase() === 'a') {
-    // @ts-expect-error - d3 types issue
-    classTarget = select(parent.node().parentNode);
+  if (parent.node()?.tagName.toLowerCase() === 'a') {
+    const parentNode = parent.node()?.parentNode;
+    if (parentNode) {
+      classTarget = select(parentNode as Element) as unknown as D3Selection<T>;
+    }
   }
 
   // Apply classes and ID to the container
