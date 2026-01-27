@@ -38,6 +38,12 @@ export const draw = async function (text: string, id: string, _version: string, 
   const svg = getDiagramElement(id, securityLevel);
   const direction = diag.db.getDirection();
 
+  // If the svg doesn't have a g element, create it.
+  // This is required for the dagre layout.
+  if (svg.select('g').empty()) {
+    svg.append('g');
+  }
+
   data4Layout.type = diag.type;
   data4Layout.layoutAlgorithm = getRegisteredLayoutAlgorithm(layout);
   if (data4Layout.layoutAlgorithm === 'dagre' && layout === 'elk') {
