@@ -33,6 +33,17 @@ export async function insertNode(
     throw new Error(`No such shape: ${node.shape}. Please check your syntax.`);
   }
 
+  // Create the outer G element that will act as the node container
+  const outerG = elem.insert('g').attr('id', node.id);
+
+  if (node.tooltip) {
+    outerG.attr('title', node.tooltip);
+  }
+
+  // @ts-expect-error - d3 types issue
+  let innerParent: NodeElement = outerG;
+  let linkEl;
+
   if (node.link) {
     // Add link when appropriate
     let target;
@@ -41,24 +52,31 @@ export async function insertNode(
     } else if (node.linkTarget) {
       target = node.linkTarget || '_blank';
     }
-    newEl = elem
+
+    linkEl = outerG
       .insert<SVGAElement>('svg:a')
       .attr('xlink:href', node.link)
       .attr('target', target ?? null);
-    el = await shapeHandler(newEl, node, renderOptions);
-  } else {
-    el = await shapeHandler(elem, node, renderOptions);
-    newEl = el;
-  }
-  if (node.tooltip) {
-    el.attr('title', node.tooltip);
+
+    innerParent = linkEl;
+
+    // Requirement 5: clickable class on <a>
+    linkEl.attr('class', 'clickable');
   }
 
+  // Draw the shape into the inner parent
+  el = await shapeHandler(innerParent, node, renderOptions);
+
+  // Clickable logic for non-link cases
+  if (node.haveCallback && !node.link) {
+     const currentClass = outerG.attr('class');
+     outerG.attr('class', (currentClass ? currentClass + ' ' : '') + 'clickable');
+  }
+
+  // Update nodeElems with the container element
+  newEl = outerG as NodeElement;
   nodeElems.set(node.id, newEl);
 
-  if (node.haveCallback) {
-    newEl.attr('class', newEl.attr('class') + ' clickable');
-  }
   return newEl;
 }
 

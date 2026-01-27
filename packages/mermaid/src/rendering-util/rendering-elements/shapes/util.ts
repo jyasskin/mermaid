@@ -21,11 +21,21 @@ export const labelHelper = async <T extends SVGGraphicsElement>(
     cssClasses = _classes;
   }
 
-  // Add outer g element
-  const shapeSvg = parent
-    .insert('g')
-    .attr('class', cssClasses)
-    .attr('id', node.domId || node.id);
+  // Identify target for classes/ID.
+  // The logic here handles both the new flow (insertNode creates container) and potentially old flows.
+  // In the new flow, `parent` is either the <a> tag (if link) or the <g> container.
+  // If it's an <a> tag, the container is the parentNode.
+  let shapeSvg = parent;
+  let classTarget = parent;
+
+  // @ts-expect-error - d3 types issue
+  if (parent.node().tagName.toLowerCase() === 'a') {
+    // @ts-expect-error - d3 types issue
+    classTarget = select(parent.node().parentNode);
+  }
+
+  // Apply classes and ID to the container
+  classTarget.attr('class', cssClasses).attr('id', node.domId || node.id);
 
   // Create the label and insert it after the rect
   const labelEl = shapeSvg
