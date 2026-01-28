@@ -34,7 +34,7 @@ export async function question<T extends SVGGraphicsElement>(parent: D3Selection
     { x: 0, y: -s / 2 },
   ];
 
-  let polygon: typeof shapeSvg | ReturnType<typeof insertPolygonShape>;
+  let polygon;
   const { cssStyles } = node;
 
   if (node.look === 'handDrawn') {

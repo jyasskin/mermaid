@@ -61,7 +61,7 @@ export async function insertNode(
   }
 
   // Draw the shape into the inner parent
-  await shapeHandler(innerParent, node, renderOptions);
+  await shapeHandler(innerParent as D3Selection<SVGGElement>, node, renderOptions);
 
   // Clickable logic for non-link cases
   if (node.haveCallback && !node.link) {

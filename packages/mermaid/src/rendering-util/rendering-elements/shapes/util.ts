@@ -85,7 +85,12 @@ export const labelHelper = async <T extends SVGGraphicsElement>(
     labelEl.attr('transform', 'translate(' + -bbox.width / 2 + ', ' + -bbox.height / 2 + ')');
   }
   labelEl.insert('rect', ':first-child');
-  return { shapeSvg, bbox, halfPadding, label: labelEl };
+  return {
+    shapeSvg: shapeSvg as unknown as D3Selection<SVGGElement>,
+    bbox,
+    halfPadding,
+    label: labelEl,
+  };
 };
 export const insertLabel = async <T extends SVGGraphicsElement>(
   parent: D3Selection<T>,
@@ -140,12 +145,12 @@ export const insertLabel = async <T extends SVGGraphicsElement>(
   labelEl.insert('rect', ':first-child');
   return { shapeSvg: parent, bbox, halfPadding, label: labelEl };
 };
-export const updateNodeBounds = <T extends SVGGraphicsElement>(
+export const updateNodeBounds = (
   node: Node,
-  // D3Selection<SVGGElement> is for the roughjs case, D3Selection<T> is for the non-roughjs case
-  element: D3Selection<SVGGElement> | D3Selection<T>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  element: D3Selection<any>
 ) => {
-  const bbox = element.node()!.getBBox();
+  const bbox = (element.node() as unknown as SVGGraphicsElement).getBBox();
   node.width = bbox.width;
   node.height = bbox.height;
 };

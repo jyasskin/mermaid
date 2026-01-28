@@ -2,6 +2,7 @@ import { describe, expect, vi } from 'vitest';
 import { jsdomIt, ensureNodeFromSelector } from '../../tests/util.js';
 import { insertNode, clear } from './nodes.js';
 import type { NonClusterNode, ShapeRenderOptions } from '../types.js';
+import type { SVGGroup } from '../../mermaid.js';
 
 describe('insertNode', () => {
   const mockRenderOptions: ShapeRenderOptions = {
@@ -13,9 +14,9 @@ describe('insertNode', () => {
 
   const createMockNode = (id: string, overrides: Partial<NonClusterNode> = {}): NonClusterNode => ({
     id,
-    type: 'round',
     label: 'Test Node',
     shape: 'rect',
+    isGroup: false,
     ...overrides,
   });
 
@@ -23,7 +24,8 @@ describe('insertNode', () => {
     const parent = svg.append('g');
     const node = createMockNode('node1');
 
-    await insertNode(parent, node, mockRenderOptions);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await insertNode(parent as any as SVGGroup, node, mockRenderOptions);
 
     const outerG = ensureNodeFromSelector('g#node1', parent.node()!);
     expect(outerG.tagName.toLowerCase()).toBe('g');
@@ -40,7 +42,8 @@ describe('insertNode', () => {
     const parent = svg.append('g');
     const node = createMockNode('node2', { link: 'http://example.com' });
 
-    await insertNode(parent, node, mockRenderOptions);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await insertNode(parent as any as SVGGroup, node, mockRenderOptions);
 
     const outerG = ensureNodeFromSelector('g#node2', parent.node()!);
     const linkEl = outerG.querySelector('a');
@@ -58,7 +61,8 @@ describe('insertNode', () => {
     const parent = svg.append('g');
     const node = createMockNode('node3', { haveCallback: true });
 
-    await insertNode(parent, node, mockRenderOptions);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await insertNode(parent as any as SVGGroup, node, mockRenderOptions);
 
     const outerG = ensureNodeFromSelector('g#node3', parent.node()!);
     expect(outerG.classList.contains('clickable')).toBe(true);
@@ -68,7 +72,8 @@ describe('insertNode', () => {
     const parent = svg.append('g');
     const node = createMockNode('node4', { tooltip: 'This is a tooltip' });
 
-    await insertNode(parent, node, mockRenderOptions);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await insertNode(parent as any as SVGGroup, node, mockRenderOptions);
 
     const outerG = ensureNodeFromSelector('g#node4', parent.node()!);
     expect(outerG.getAttribute('title')).toBe('This is a tooltip');
@@ -78,7 +83,8 @@ describe('insertNode', () => {
     const parent = svg.append('g');
     const node = createMockNode('node5', { link: 'http://example.com' });
 
-    await insertNode(parent, node, mockRenderOptions);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await insertNode(parent as any as SVGGroup, node, mockRenderOptions);
 
     const outerG = ensureNodeFromSelector('g#node5', parent.node()!);
     const linkEl = outerG.querySelector('a')!;
