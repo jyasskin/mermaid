@@ -21,11 +21,21 @@ export const labelHelper = async <T extends SVGGraphicsElement>(
     cssClasses = _classes;
   }
 
-  // Add outer g element
-  const shapeSvg = parent
-    .insert('g')
-    .attr('class', cssClasses)
-    .attr('id', node.domId || node.id);
+  // Identify target for classes/ID.
+  // If `parent` is an anchor tag (which happens if a link is present),
+  // we want to apply the classes and ID to its parent container (the outer <g>).
+  const shapeSvg = parent;
+  let classTarget = parent;
+
+  if (parent.node()?.tagName.toLowerCase() === 'a') {
+    const parentNode = parent.node()?.parentNode;
+    if (parentNode) {
+      classTarget = select(parentNode as Element) as unknown as D3Selection<T>;
+    }
+  }
+
+  // Apply classes and ID to the container
+  classTarget.attr('class', cssClasses).attr('id', node.domId || node.id);
 
   // Create the label and insert it after the rect
   const labelEl = shapeSvg
@@ -75,7 +85,12 @@ export const labelHelper = async <T extends SVGGraphicsElement>(
     labelEl.attr('transform', 'translate(' + -bbox.width / 2 + ', ' + -bbox.height / 2 + ')');
   }
   labelEl.insert('rect', ':first-child');
-  return { shapeSvg, bbox, halfPadding, label: labelEl };
+  return {
+    shapeSvg: shapeSvg as unknown as D3Selection<SVGGElement>,
+    bbox,
+    halfPadding,
+    label: labelEl,
+  };
 };
 export const insertLabel = async <T extends SVGGraphicsElement>(
   parent: D3Selection<T>,
@@ -130,12 +145,12 @@ export const insertLabel = async <T extends SVGGraphicsElement>(
   labelEl.insert('rect', ':first-child');
   return { shapeSvg: parent, bbox, halfPadding, label: labelEl };
 };
-export const updateNodeBounds = <T extends SVGGraphicsElement>(
+export const updateNodeBounds = (
   node: Node,
-  // D3Selection<SVGGElement> is for the roughjs case, D3Selection<T> is for the non-roughjs case
-  element: D3Selection<SVGGElement> | D3Selection<T>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  element: D3Selection<any>
 ) => {
-  const bbox = element.node()!.getBBox();
+  const bbox = (element.node() as unknown as SVGGraphicsElement).getBBox();
   node.width = bbox.width;
   node.height = bbox.height;
 };

@@ -35,7 +35,7 @@ export async function trapezoid<T extends SVGGraphicsElement>(parent: D3Selectio
     { x: 0, y: -h },
   ];
 
-  let polygon: typeof shapeSvg | ReturnType<typeof insertPolygonShape>;
+  let polygon;
   const { cssStyles } = node;
 
   if (node.look === 'handDrawn') {

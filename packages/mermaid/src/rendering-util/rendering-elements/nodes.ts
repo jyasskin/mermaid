@@ -15,9 +15,6 @@ export async function insertNode(
   node: NonClusterNode,
   renderOptions: ShapeRenderOptions
 ) {
-  let newEl: NodeElement | undefined;
-  let el;
-
   //special check for rect shape (with or without rounded corners)
   if (node.shape === 'rect') {
     if (node.rx && node.ry) {
@@ -33,32 +30,49 @@ export async function insertNode(
     throw new Error(`No such shape: ${node.shape}. Please check your syntax.`);
   }
 
+  // Create the outer G element that will act as the node container
+  const outerG = elem.insert('g').attr('id', node.id);
+
+  if (node.tooltip) {
+    outerG.attr('title', node.tooltip);
+  }
+
+  let innerParent: D3Selection<SVGGElement> | D3Selection<SVGAElement> = outerG;
+  let linkEl;
+
   if (node.link) {
     // Add link when appropriate
     let target;
     if (renderOptions.config.securityLevel === 'sandbox') {
       target = '_top';
     } else if (node.linkTarget) {
-      target = node.linkTarget || '_blank';
+      target = node.linkTarget ?? '_blank';
     }
-    newEl = elem
+
+    linkEl = outerG
       .insert<SVGAElement>('svg:a')
       .attr('xlink:href', node.link)
       .attr('target', target ?? null);
-    el = await shapeHandler(newEl, node, renderOptions);
-  } else {
-    el = await shapeHandler(elem, node, renderOptions);
-    newEl = el;
-  }
-  if (node.tooltip) {
-    el.attr('title', node.tooltip);
+
+    innerParent = linkEl;
+
+    // Add clickable class to link element
+    linkEl.attr('class', 'clickable');
   }
 
+  // Draw the shape into the inner parent
+  await shapeHandler(innerParent as D3Selection<SVGGElement>, node, renderOptions);
+
+  // Clickable logic for non-link cases
+  if (node.haveCallback && !node.link) {
+    const currentClass = outerG.attr('class');
+    outerG.attr('class', (currentClass ? currentClass + ' ' : '') + 'clickable');
+  }
+
+  // Update nodeElems with the container element
+  const newEl = outerG as NodeElement;
   nodeElems.set(node.id, newEl);
 
-  if (node.haveCallback) {
-    newEl.attr('class', newEl.attr('class') + ' clickable');
-  }
   return newEl;
 }
 
